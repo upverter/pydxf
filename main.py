@@ -166,6 +166,7 @@ class DxfSection(object):
         for cls in DxfSection.__subclasses__():
             DxfSection.section_factories[cls.SECTION_TYPE] = cls.make_section
 
+
 class EntitiesSection(DxfSection):
 
     SECTION_TYPE = 'ENTITIES'
@@ -243,6 +244,12 @@ class DxfFile(object):
                 #    # Got some other top-level record. I think this indicates an error with the file.
                 #    pass
 
+        if building_section_records:
+            # The file appears to have been truncated because we never got an ENDSEC for the last section we were
+            # working on. LibreCAD seems to create files like this.
+            section_records.append(DxfRecord(0, 'ENDSEC'))
+            dxf_file.sections.append(DxfSection.make_section(section_records))
+
         return dxf_file
 
     @staticmethod
@@ -287,7 +294,7 @@ if __name__ == '__main__':
     window.pack()
     window.create_rectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, fill="white")
 
-    fi = open('board.dxf', 'rt')
+    fi = open('drawing1.dxf', 'rt')
     df = DxfFile.make_file(DxfFile.ascii_record_iterator(fi))
     # df = DxfFile(fi)
     for section in df.iter_sections():
@@ -299,8 +306,8 @@ if __name__ == '__main__':
             for entity in section.iter_entities():
                 # print entity.name
                 if entity.name == 'LINE':
-                    window.create_line(25+entity.x1*40, WINDOW_HEIGHT-(25+entity.y1*40), 25+entity.x2*40, WINDOW_HEIGHT-(25+entity.y2*40))
-                    # window.create_line(25+entity.x1, WINDOW_HEIGHT-(25+entity.y1), 25+entity.x2, WINDOW_HEIGHT-(25+entity.y2))
+                    # window.create_line(25+entity.x1*40, WINDOW_HEIGHT-(25+entity.y1*40), 25+entity.x2*40, WINDOW_HEIGHT-(25+entity.y2*40))
+                    window.create_line(25+entity.x1, WINDOW_HEIGHT-(25+entity.y1), 25+entity.x2, WINDOW_HEIGHT-(25+entity.y2))
                     # print '\tLINE %s,%s to %s,%s' % (entity.x1, entity.y1, entity.x2, entity.y2)
 
     # window.create_line(40, 40, 40, 360)
