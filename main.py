@@ -139,6 +139,65 @@ class DxfTable(object):
             DxfTable.table_factories[cls.TABLE_TYPE] = cls.make_table
 
 
+class LayerTable(DxfTable):
+
+    TABLE_TYPE = 'LAYER'
+
+    def __init__(self):
+        super(LayerTable, self).__init__()
+        self.name = LayerTable.TABLE_TYPE
+        self.layers = []
+
+    def add_layer(self, layer):
+        self.layers.append(layer)
+
+    def iter_layers(self):
+        for layer in self.layers:
+            yield layer
+
+    @staticmethod
+    def make_table(records):
+        table = LayerTable()
+        building_layer_records = False
+        start_index = 0
+
+        for i, rec in enumerate(records[2:], 2):
+            if building_layer_records:
+                if rec.code == 0:
+                    # Start of next layer or ENDTAB record has been reached.
+                    table.add_layer(DxfLayer.make_layer(records[start_index:i]))
+                    start_index = i
+            else:
+                if rec.code == 0:
+                    building_layer_records = True
+                    start_index = i
+                else:
+                    table.add_record(rec)
+
+        return table
+
+
+class DxfLayer(object):
+
+    def __init__(self):
+        self.name = ''
+        self.color_index = None
+
+    @staticmethod
+    def make_layer(records):
+        ''' Construct a DxfLayer from a list of records.
+        '''
+        layer = DxfLayer()
+
+        for record in records:
+            if record.code == 2:
+                layer.name = record.value
+            elif record.code == 62:
+                layer.color_index = record.value
+
+        return layer
+
+
 class LineEntity(DxfEntity):
 
     ENTITY_TYPE = 'LINE'
@@ -450,8 +509,9 @@ if __name__ == '__main__':
                     window.create_line(25+entity.x1, WINDOW_HEIGHT-(25+entity.y1), 25+entity.x2, WINDOW_HEIGHT-(25+entity.y2))
                     # print '\tLINE %s,%s to %s,%s' % (entity.x1, entity.y1, entity.x2, entity.y2)
 
-    for table in df.get_section('TABLES').iter_tables():
-        print table.name
+    layer_table = df.get_section('TABLES').get_table('LAYER')
+    for layer in layer_table.iter_layers():
+        print '%s %s' % (layer.name, layer.color_index)
 
     # window.create_line(40, 40, 40, 360)
     # window.create_line(40, 360, 360, 40, fill="green")
