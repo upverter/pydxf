@@ -90,6 +90,55 @@ class DxfEntity(object):
             DxfEntity.entity_factories[cls.ENTITY_TYPE] = cls.make_entity
 
 
+class DxfTable(object):
+
+    table_factories = None
+
+    def __init__(self):
+        self.name = ''
+        self.records = []
+
+    def add_record(self, record):
+        self.records.append(record)
+
+    def iter_records(self):
+        for rec in self.records:
+            yield rec
+
+    @staticmethod
+    def __make_default_table(records):
+        table = DxfTable()
+        table.name = records[1].value
+
+        for rec in records[1:-1]:
+            table.add_record(rec)
+
+        return table
+
+    @staticmethod
+    def make_table(records):
+        ''' Construct a DxfTable from a list of records.
+        '''
+
+        if len(records) < 3:
+            raise FormatException('Tables must have at least a start record, name record, and end record')
+        if records[1].code != 2:
+            raise FormatException('The second record in a table definition must be the table name')
+        if records[-1].code != 0 or records[-1].value != 'ENDTAB':
+            raise FormatException('The last record in a table definition must be an end record')
+
+        if not DxfTable.table_factories:
+            DxfTable.populate_factory_table()
+
+        return DxfTable.table_factories[records[1].value](records)
+
+    @staticmethod
+    def populate_factory_table():
+        DxfTable.table_factories = collections.defaultdict(lambda: DxfTable.__make_default_table)
+        for cls in DxfTable.__subclasses__():
+            DxfTable.table_factories[cls.TABLE_TYPE] = cls.make_table
+
+
 class LineEntity(DxfEntity):
 
     ENTITY_TYPE = 'LINE'
@@ -174,6 +223,44 @@ class DxfSection(object):
             DxfSection.section_factories[cls.SECTION_TYPE] = cls.make_section
 
 
+class EntitiesSection(DxfSection):
+
+    SECTION_TYPE = 'ENTITIES'
+
+    def __init__(self):
+        super(EntitiesSection, self).__init__()
+        self.name = EntitiesSection.SECTION_TYPE
+        self.entities = []
+
+    def add_entity(self, entity):
+        self.entities.append(entity)
+
+    def iter_entities(self):
+        for entity in self.entities:
+            yield entity
+
+    @staticmethod
+    def make_section(records):
+        section = EntitiesSection()
+        building_entity_records = False
+        start_index = 0
+
+        for i, rec in enumerate(records[2:], 2):
+            if building_entity_records:
+                if rec.code == 0:
+                    # Start of next entity or ENDSEC record has been reached.
+                    section.add_entity(DxfEntity.make_entity(records[start_index:i]))
+                    start_index = i
+            else:
+                if rec.code == 0:
+                    building_entity_records = True
+                    start_index = i
+                else:
+                    section.add_record(rec)
+
+        return section
+
+
 class HeaderSection(DxfSection):
 
     SECTION_TYPE = 'HEADER'
@@ -216,37 +303,39 @@ class HeaderSection(DxfSection):
         return var_name, records[1].value if len(records) == 2 else copy.deepcopy(records[1:])
 
 
-class EntitiesSection(DxfSection):
+class TablesSection(DxfSection):
 
-    SECTION_TYPE = 'ENTITIES'
+    SECTION_TYPE = 'TABLES'
 
     def __init__(self):
-        super(EntitiesSection, self).__init__()
-        self.name = EntitiesSection.SECTION_TYPE
-        self.entities = []
+        super(TablesSection, self).__init__()
+        self.name = TablesSection.SECTION_TYPE
+        self.tables = collections.defaultdict(lambda: None)
 
-    def add_entity(self, entity):
-        self.entities.append(entity)
+    def get_table(self, name):
+        return self.tables[name]
 
-    def iter_entities(self):
-        for entity in self.entities:
-            yield entity
+    def add_table(self, table):
+        self.tables[table.name] = table
+
+    def iter_tables(self):
+        for table in self.tables.values():
+            yield table
 
     @staticmethod
     def make_section(records):
-        section = EntitiesSection()
-        building_entity_records = False
+        section = TablesSection()
+        building_table = False
         start_index = 0
 
-        for i, rec in enumerate(records[2:], 2):
-            if building_entity_records:
-                if rec.code == 0:
-                    # Start of next entity or ENDSEC record has been reached.
-                    section.add_entity(DxfEntity.make_entity(records[start_index:i]))
-                    start_index = i
+        for i, rec in enumerate(records[2:-1], 2):
+            if building_table:
+                if rec.code == 0 and rec.value == 'ENDTAB':
+                    section.add_table(DxfTable.make_table(records[start_index:i+1]))
+                    building_table = False
             else:
                 if rec.code == 0:
-                    building_entity_records = True
+                    building_table = True
                     start_index = i
                 else:
                     section.add_record(rec)
@@ -360,6 +449,9 @@ if __name__ == '__main__':
                     # window.create_line(25+entity.x1*40, WINDOW_HEIGHT-(25+entity.y1*40), 25+entity.x2*40, WINDOW_HEIGHT-(25+entity.y2*40))
                     window.create_line(25+entity.x1, WINDOW_HEIGHT-(25+entity.y1), 25+entity.x2, WINDOW_HEIGHT-(25+entity.y2))
                     # print '\tLINE %s,%s to %s,%s' % (entity.x1, entity.y1, entity.x2, entity.y2)
+
+    for table in df.get_section('TABLES').iter_tables():
+        print table.name
 
     # window.create_line(40, 40, 40, 360)
     # window.create_line(40, 360, 360, 40, fill="green")
