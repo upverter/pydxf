@@ -167,21 +167,9 @@ class LayerTable(DxfTable):
     @staticmethod
     def make_table(records):
         table = LayerTable()
-        building_layer_records = False
-        start_index = 0
 
-        for i, rec in enumerate(records[2:], 2):
-            if building_layer_records:
-                if rec.code == 0:
-                    # Start of next layer or ENDTAB record has been reached.
-                    table.add_layer(DxfLayer.make_layer(records[start_index:i]))
-                    start_index = i
-            else:
-                if rec.code == 0:
-                    building_layer_records = True
-                    start_index = i
-                else:
-                    table.add_record(rec)
+        for layer_records in tools.record_block_iterator(records, DxfRecord(0, 'LAYER'), DxfRecord(0, None)):
+            table.add_layer(DxfLayer.make_layer(layer_records))
 
         return table
 
@@ -315,24 +303,6 @@ class EntitiesSection(DxfSection):
             section.add_entity(DxfEntity.make_entity(entity_records))
 
         return section
-        # section = EntitiesSection()
-        # building_entity_records = False
-        # start_index = 0
-
-        # for i, rec in enumerate(records[2:], 2):
-        #     if building_entity_records:
-        #         if rec.code == 0:
-        #             # Start of next entity or ENDSEC record has been reached.
-        #             section.add_entity(DxfEntity.make_entity(records[start_index:i]))
-        #             start_index = i
-        #     else:
-        #         if rec.code == 0:
-        #             building_entity_records = True
-        #             start_index = i
-        #         else:
-        #             section.add_record(rec)
-
-        # return section
 
 
 class HeaderSection(DxfSection):
@@ -399,20 +369,9 @@ class TablesSection(DxfSection):
     @staticmethod
     def make_section(records):
         section = TablesSection()
-        building_table = False
-        start_index = 0
 
-        for i, rec in enumerate(records[2:-1], 2):
-            if building_table:
-                if rec.code == 0 and rec.value == 'ENDTAB':
-                    section.add_table(DxfTable.make_table(records[start_index:i+1]))
-                    building_table = False
-            else:
-                if rec.code == 0:
-                    building_table = True
-                    start_index = i
-                else:
-                    section.add_record(rec)
+        for table_records in tools.record_block_iterator(records, DxfRecord(0, 'TABLE'), DxfRecord(0, 'ENDTAB'), True):
+            section.add_table(DxfTable.make_table(table_records))
 
         return section
 
@@ -463,18 +422,6 @@ class DxfFile(object):
             dxf_file.sections.append(DxfSection.make_section(section_records))
 
         return dxf_file
-
-    @staticmethod
-    def ascii_record_iterator(stream):
-        ''' Return a sequence of DxfRecords as parsed from a stream representing an ASCII DXF file.
-            stream - Any stream supporting the readline method. Stream does not need to be seekable.
-        '''
-
-        while True:
-            rec = DxfRecord.parse_from_stream(stream)
-            if rec is None:
-                break
-            yield rec
 
     def iter_sections(self):
         if not self.sections:
