@@ -1,4 +1,5 @@
 import collections
+import copy
 import pydxf
 
 
@@ -15,59 +16,71 @@ def ascii_record_iterator(stream):
         yield rec
 
 
-def record_block_iterator(records, block_start, block_end, include_end=False):
+class record_block_iterator(object):
     ''' Given a iterable collection of records, group the collection into lists of records using the block_start and
-        block_end rules to determine block boundaries.
+        block_end rules to determine block boundaries. Once the generator has run through completely, any records from
+        the supplied set that aren't a member of a block can be accessed from the get_top_level_records method.
         block_end may be an iterable collection of rules, such that if any are encountered, the block ends.
     '''
-    end_rules = _make_end_rules(block_end)
 
-    in_block = False
-    record_set = []
+    def __init__(self, records, block_start, block_end, include_end=False):
+        self.records = records
+        self.block_start = block_start
+        self.block_end = block_end
+        self.include_end = include_end
+        self.end_rules = record_block_iterator._make_end_rules(block_end)
+        self.top_level_records = []
+        self.in_block = False
+        self.exhausted = False
+        self.next_set = []
 
-    for rec in records:
-        if in_block:
-            if any((rule.matches(rec) for rule in end_rules)):
-                if include_end:
-                    record_set.append(rec)
-                    in_block = False
-                    yield record_set
-                    record_set = []
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return self.next()
+
+    def get_top_level_records(self):
+        if self.exhausted:
+            return self.top_level_records
+
+        raise RuntimeError('get_top_level_records called on record_block_iterator before generator is exhausted.')
+
+    @staticmethod
+    def _make_end_rules(block_end):
+        if isinstance(block_end, pydxf.DxfRecord):
+            return [block_end]
+        elif isinstance(block_end, collections.Iterable):
+            return list(block_end)
+        else:
+            raise TypeError
+
+    def next(self):
+        record_set = copy.copy(self.next_set)
+        self.next_set = []
+
+        for rec in self.records:
+            if self.in_block:
+                if any(rule.matches(rec) for rule in self.end_rules):
+                    if self.include_end:
+                        record_set.append(rec)
+                        self.in_block = False
+                        break
+                    else:
+                        self.next_set.append(rec)
+                        break
                 else:
-                    yield record_set
-                    record_set = [rec]
+                    record_set.append(rec)
             else:
-                record_set.append(rec)
+                if self.block_start.matches(rec):
+                    self.in_block = True
+                    record_set.append(rec)
+                else:
+                    self.top_level_records.append(rec)
         else:
-            if block_start.matches(rec):
-                in_block = True
-                record_set.append(rec)
+            self.exhausted = True
+            for rec in record_set:
+                self.top_level_records.append(rec)
+            raise StopIteration
 
-
-def unblocked_record_iterator(records, block_start, block_end, include_end=False):
-    ''' This is the compliment to the record_block_iterator - it returns records that are not part of a block.
-    '''
-    end_rules = _make_end_rules(block_end)
-
-    in_block = False
-    record_set = []
-
-    for rec in records:
-        if in_block:
-            in_block = not any((rule.matches(rec) for rule in end_rules))
-        else:
-            in_block = block_start.matches(rec)
-            if not in_block:
-                yield rec
-            elif in_block and not include_end:
-                # We're done if we don't include end blocks, since there's no way to indicate the end of a block.
-                break
-
-
-def _make_end_rules(block_end):
-    if isinstance(block_end, pydxf.DxfRecord):
-        return [block_end]
-    elif isinstance(block_end, collections.Iterable):
-        return list(block_end)
-    else:
-        raise TypeError
+        return record_set

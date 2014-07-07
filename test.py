@@ -68,6 +68,11 @@ class DxfParseTests(unittest.TestCase):
         assert b2[2].matches(pydxf.DxfRecord(10, '1'))
         self.assertRaises(StopIteration, block_iter.next)
 
+        top_level = block_iter.get_top_level_records()
+        assert len(top_level) == 2
+        assert top_level[0].matches(pydxf.DxfRecord(999, 'This is a comment'))
+        assert top_level[1].matches(pydxf.DxfRecord(0, 'ENDSEC'))
+
     def test_block_iterator_sections(self):
         dxf = '''0
         SECTION
@@ -75,6 +80,8 @@ class DxfParseTests(unittest.TestCase):
         ENTITIES
         0
         ENDSEC
+        999
+        This is a comment
         0
         SECTION
         2
@@ -96,6 +103,11 @@ class DxfParseTests(unittest.TestCase):
         assert b2[1].matches(pydxf.DxfRecord(2, 'TABLES'))
         assert b2[2].matches(pydxf.DxfRecord(0, 'ENDSEC'))
         self.assertRaises(StopIteration, block_iter.next)
+
+        top_level = block_iter.get_top_level_records()
+        assert len(top_level) == 2
+        assert top_level[0].matches(pydxf.DxfRecord(999, 'This is a comment'))
+        assert top_level[1].matches(pydxf.DxfRecord(0, 'EOF'))
 
     def test_block_iterator_multi_end(self):
         dxf = '''0
@@ -128,38 +140,10 @@ class DxfParseTests(unittest.TestCase):
         assert b2[2].matches(pydxf.DxfRecord(0, 'EOF'))
         self.assertRaises(StopIteration, block_iter.next)
 
-    def test_unblocked_record_iterator(self):
-        dxf = '''999
-        Comment 1
-        0
-        SECTION
-        2
-        ENTITIES
-        0
-        ENDSEC
-        999
-        Comment 2
-        0
-        SECTION
-        2
-        TABLES
-        0
-        ENDSEC
-        999
-        Comment 3
-        0
-        EOF'''
-        records = pydxf.tools.ascii_record_iterator(StringIO.StringIO(dxf))
-        record_iter = pydxf.tools.unblocked_record_iterator(records, pydxf.DxfRecord(0, 'SECTION'), [pydxf.DxfRecord(0, 'ENDSEC'), pydxf.DxfRecord(0, 'EOF')], True)
-        r1 = record_iter.next()
-        assert r1.matches(pydxf.DxfRecord(999, 'Comment 1'))
-        r2 = record_iter.next()
-        assert r2.matches(pydxf.DxfRecord(999, 'Comment 2'))
-        r3 = record_iter.next()
-        assert r3.matches(pydxf.DxfRecord(999, 'Comment 3'))
-        r4 = record_iter.next()
-        assert r4.matches(pydxf.DxfRecord(0, 'EOF'))
-        self.assertRaises(StopIteration, record_iter.next)
+        top_level = block_iter.get_top_level_records()
+        assert len(top_level) == 2
+        assert top_level[0].matches(pydxf.DxfRecord(999, 'This is a comment'))
+        assert top_level[1].matches(pydxf.DxfRecord(0, 'ENDSEC'))
 
     def test_parse_simple_file(self):
         df = pydxf.DxfFile.make_file(pydxf.tools.ascii_record_iterator(StringIO.StringIO(DxfParseTests.SIMPLE)))
