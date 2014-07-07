@@ -1,3 +1,4 @@
+import collections
 import pydxf
 
 
@@ -15,23 +16,58 @@ def ascii_record_iterator(stream):
 
 
 def record_block_iterator(records, block_start, block_end, include_end=False):
-    ''' Given a list of records, group the list into sub-lists based on the block_start and block_end records, and
-        iterate over those blocks of records.
+    ''' Given a iterable collection of records, group the collection into lists of records using the block_start and
+        block_end rules to determine block boundaries.
+        block_end may be an iterable collection of rules, such that if any are encountered, the block ends.
     '''
+    end_rules = _make_end_rules(block_end)
 
     in_block = False
-    start_index = 0
+    record_set = []
 
-    for i, rec in enumerate(records):
+    for rec in records:
         if in_block:
-            if block_end.matches(rec):
+            if any((rule.matches(rec) for rule in end_rules)):
                 if include_end:
-                    yield records[start_index:i+1]
+                    record_set.append(rec)
                     in_block = False
+                    yield record_set
+                    record_set = []
                 else:
-                    yield records[start_index:i]
-                    start_index = i
+                    yield record_set
+                    record_set = [rec]
+            else:
+                record_set.append(rec)
         else:
             if block_start.matches(rec):
                 in_block = True
-                start_index = i
+                record_set.append(rec)
+
+
+def unblocked_record_iterator(records, block_start, block_end, include_end=False):
+    ''' This is the compliment to the record_block_iterator - it returns records that are not part of a block.
+    '''
+    end_rules = _make_end_rules(block_end)
+
+    in_block = False
+    record_set = []
+
+    for rec in records:
+        if in_block:
+            in_block = not any((rule.matches(rec) for rule in end_rules))
+        else:
+            in_block = block_start.matches(rec)
+            if not in_block:
+                yield rec
+            elif in_block and not include_end:
+                # We're done if we don't include end blocks, since there's no way to indicate the end of a block.
+                break
+
+
+def _make_end_rules(block_end):
+    if isinstance(block_end, pydxf.DxfRecord):
+        return [block_end]
+    elif isinstance(block_end, collections.Iterable):
+        return list(block_end)
+    else:
+        raise TypeError
