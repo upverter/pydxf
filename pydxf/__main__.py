@@ -1,4 +1,5 @@
 import pydxf
+import sys
 import Tkinter as tk
 import tools
 
@@ -12,9 +13,9 @@ if __name__ == '__main__':
     window.pack()
     window.create_rectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, fill="white")
 
-    fi = open('drawing1.dxf', 'rt')
+    fi = open(sys.argv[1], 'rt')
     df = pydxf.DxfFile.make_file(tools.ascii_record_iterator(fi))
-    print 'Version: %s' % df.get_section('HEADER').get_variable('ACADVER')
+    # print 'Version: %s' % df.get_section('HEADER').get_variable('ACADVER')
 
     # df = DxfFile(fi)
     for section in df.iter_sections():
@@ -30,9 +31,9 @@ if __name__ == '__main__':
                     window.create_line(25+entity.x1, WINDOW_HEIGHT-(25+entity.y1), 25+entity.x2, WINDOW_HEIGHT-(25+entity.y2))
                     # print '\tLINE %s,%s to %s,%s' % (entity.x1, entity.y1, entity.x2, entity.y2)
 
-    layer_table = df.get_section('TABLES').get_table('LAYER')
-    for layer in layer_table.iter_layers():
-        print '%s %s' % (layer.name, layer.color_index)
+    # layer_table = df.get_section('TABLES').get_table('LAYER')
+    # for layer in layer_table.iter_layers():
+    #     print '%s %s' % (layer.name, layer.color_index)
 
     # window.create_line(40, 40, 40, 360)
     # window.create_line(40, 360, 360, 40, fill="green")

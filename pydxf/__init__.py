@@ -61,8 +61,8 @@ class DxfEntity(object):
         self.name = ''
         self.records = []
 
-    def add_record(self, record):
-        self.records.append(record)
+    def add_records(self, record):
+        tools.list_extend(self.records, record)
 
     def iter_records(self):
         for rec in self.records:
@@ -73,9 +73,7 @@ class DxfEntity(object):
         # Don't worry about error checking. Should be done already.
         entity = DxfEntity()
         entity.name = records[0].value
-
-        for rec in records[1:]:
-            entity.add_record(rec)
+        entity.add_records(records[1:])
 
         return entity
 
@@ -107,8 +105,8 @@ class DxfTable(object):
         self.name = ''
         self.records = []
 
-    def add_record(self, record):
-        self.records.append(record)
+    def add_records(self, record):
+        tools.list_extend(self.records, record)
 
     def iter_records(self):
         for rec in self.records:
@@ -118,9 +116,7 @@ class DxfTable(object):
     def __make_default_table(records):
         table = DxfTable()
         table.name = records[1].value
-
-        for rec in records[1:-1]:
-            table.add_record(rec)
+        table.add_records(records[1:-1])
 
         return table
 
@@ -157,8 +153,8 @@ class LayerTable(DxfTable):
         self.name = LayerTable.TABLE_TYPE
         self.layers = []
 
-    def add_layer(self, layer):
-        self.layers.append(layer)
+    def add_layers(self, layer):
+        tools.list_extend(self.layers, layer)
 
     def iter_layers(self):
         for layer in self.layers:
@@ -168,8 +164,11 @@ class LayerTable(DxfTable):
     def make_table(records):
         table = LayerTable()
 
-        for layer_records in tools.record_block_iterator(records, DxfRecord(0, 'LAYER'), DxfRecord(0, None)):
-            table.add_layer(DxfLayer.make_layer(layer_records))
+        block_iter = tools.record_block_iterator(records, DxfRecord(0, 'LAYER'), DxfRecord(0, None))
+        for layer_records in block_iter:
+            table.add_layers(DxfLayer.make_layer(layer_records))
+
+        table.add_records(block_iter.get_top_level_records())
 
         return table
 
@@ -224,7 +223,7 @@ class LineEntity(DxfEntity):
             elif rec.code == 21:
                 entity.y2 = float(rec.value)
             else:
-                entity.add_record(rec)
+                entity.add_records(rec)
 
         return entity
 
@@ -237,8 +236,8 @@ class DxfSection(object):
         self.name = ''
         self.records = []
 
-    def add_record(self, record):
-        self.records.append(record)
+    def add_records(self, record):
+        tools.list_extend(self.records, record)
 
     def iter_records(self):
         for rec in self.records:
@@ -249,9 +248,7 @@ class DxfSection(object):
         # Don't worry about checking data integrity - should already be done.
         section = DxfSection()
         section.name = records[1].value
-
-        for record in records[2:-1]:
-            section.add_record(record)
+        section.add_records(records[2:-1])
 
         return section
 
@@ -288,8 +285,8 @@ class EntitiesSection(DxfSection):
         self.name = EntitiesSection.SECTION_TYPE
         self.entities = []
 
-    def add_entity(self, entity):
-        self.entities.append(entity)
+    def add_entities(self, entity):
+        tools.list_extend(self.entities, entity)
 
     def iter_entities(self):
         for entity in self.entities:
@@ -299,8 +296,11 @@ class EntitiesSection(DxfSection):
     def make_section(records):
         section = EntitiesSection()
 
-        for entity_records in tools.record_block_iterator(records[2:], DxfRecord(0, None), DxfRecord(0, None)):
-            section.add_entity(DxfEntity.make_entity(entity_records))
+        block_iter = tools.record_block_iterator(records[2:], DxfRecord(0, None), DxfRecord(0, None))
+        for entity_records in block_iter:
+            section.add_entities(DxfEntity.make_entity(entity_records))
+
+        section.add_records(block_iter.get_top_level_records())
 
         return section
 
@@ -320,20 +320,12 @@ class HeaderSection(DxfSection):
     @staticmethod
     def make_section(records):
         section = HeaderSection()
-        building_variable = False
-        start_index = 0
 
-        for i, rec in enumerate(records[2:], 2):
-            if building_variable:
-                if rec.is_section_end() or rec.code == 9:
-                    section._add_variable(*HeaderSection._make_variable(records[start_index:i]))
-                    start_index = i
-            else:
-                if rec.code == 9:
-                    start_index = i
-                    building_variable = True
-                else:
-                    section.add_record(rec)
+        block_iter = tools.record_block_iterator(records, DxfRecord(9, None), [DxfRecord(9, None), DxfRecord(0, 'ENDSEC')])
+        for variable_records in block_iter:
+            section._add_variable(*HeaderSection._make_variable(variable_records))
+
+        section.add_records(block_iter.get_top_level_records())
 
         return section
 
@@ -370,8 +362,11 @@ class TablesSection(DxfSection):
     def make_section(records):
         section = TablesSection()
 
-        for table_records in tools.record_block_iterator(records, DxfRecord(0, 'TABLE'), DxfRecord(0, 'ENDTAB'), True):
+        block_iter = tools.record_block_iterator(records, DxfRecord(0, 'TABLE'), DxfRecord(0, 'ENDTAB'), True)
+        for table_records in block_iter:
             section.add_table(DxfTable.make_table(table_records))
+
+        section.add_records(block_iter.get_top_level_records())
 
         return section
 

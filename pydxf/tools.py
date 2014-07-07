@@ -16,6 +16,16 @@ def ascii_record_iterator(stream):
         yield rec
 
 
+def list_extend(list, items):
+    ''' Helper function for appending things to a list. If items is some kind of iterable, then each element of items
+        is appended to list. Otherwise, the value of items is appended.
+    '''
+    if isinstance(items, collections.Iterable):
+        list.extend(items)
+    else:
+        list.append(items)
+
+
 class record_block_iterator(object):
     ''' Given a iterable collection of records, group the collection into lists of records using the block_start and
         block_end rules to determine block boundaries. Once the generator has run through completely, any records from
@@ -24,7 +34,7 @@ class record_block_iterator(object):
     '''
 
     def __init__(self, records, block_start, block_end, include_end=False):
-        self.records = records
+        self.records = (rec for rec in records)
         self.block_start = block_start
         self.block_end = block_end
         self.include_end = include_end
@@ -79,8 +89,6 @@ class record_block_iterator(object):
                     self.top_level_records.append(rec)
         else:
             self.exhausted = True
-            for rec in record_set:
-                self.top_level_records.append(rec)
             raise StopIteration
 
         return record_set

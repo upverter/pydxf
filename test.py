@@ -69,9 +69,8 @@ class DxfParseTests(unittest.TestCase):
         self.assertRaises(StopIteration, block_iter.next)
 
         top_level = block_iter.get_top_level_records()
-        assert len(top_level) == 2
+        assert len(top_level) == 1
         assert top_level[0].matches(pydxf.DxfRecord(999, 'This is a comment'))
-        assert top_level[1].matches(pydxf.DxfRecord(0, 'ENDSEC'))
 
     def test_block_iterator_sections(self):
         dxf = '''0
@@ -149,6 +148,8 @@ class DxfParseTests(unittest.TestCase):
         df = pydxf.DxfFile.make_file(pydxf.tools.ascii_record_iterator(StringIO.StringIO(DxfParseTests.SIMPLE)))
         assert len(list(df.iter_sections())) == 1
         sec = df.get_section('ENTITIES')
+        for rec in sec.iter_records():
+            print rec
         assert len(list(sec.iter_records())) == 0
 
     def test_parse_truncated_file(self):
@@ -163,6 +164,23 @@ class DxfParseTests(unittest.TestCase):
         assert len(list(df.iter_sections())) == 1
         sec = df.get_section('ENTITIES')
         assert len(list(sec.iter_records())) == 0
+
+    def test_list_extend_single(self):
+        base_list = [1, 2]
+        pydxf.tools.list_extend(base_list, 3)
+        assert len(base_list) == 3
+        assert base_list[0] == 1
+        assert base_list[1] == 2
+        assert base_list[2] == 3
+
+    def test_list_extend_multiple(self):
+        base_list = [1, 2]
+        pydxf.tools.list_extend(base_list, [3, 4])
+        assert len(base_list) == 4
+        assert base_list[0] == 1
+        assert base_list[1] == 2
+        assert base_list[2] == 3
+        assert base_list[3] == 4
 
 if __name__ == '__main__':
     unittest.main()
