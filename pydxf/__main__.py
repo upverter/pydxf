@@ -27,7 +27,7 @@ class DxfWindow(object):
         self.window.bind('<Button-5>', self.wheel_down)
 
     def draw_dxf(self, tx, ty, zoom):
-        self.window.create_rectangle(0, 0, self.width, self.height, fill="white")
+        self.window.create_rectangle(0, 0, self.width, self.height, fill='#dedede')
 
         for section in self.file.iter_sections():
             for rec in section.iter_records():
@@ -39,14 +39,16 @@ class DxfWindow(object):
                         x2 = entity.x2 * zoom + tx
                         y1 = entity.y1 * zoom + ty
                         y2 = entity.y2 * zoom + ty
-                        self.window.create_line(x1, self.height - y1, x2, self.height - y2)
+                        color = tools.COLORS[df.get_layer(entity.layer_name).color_index]
+                        self.window.create_line(x1, self.height - y1, x2, self.height - y2, fill=color)
                         # print '\tLINE %s,%s to %s,%s' % (entity.x1, entity.y1, entity.x2, entity.y2)
                     elif entity.name == 'CIRCLE':
                         x1 = (entity.x - entity.radius) * zoom + tx
                         x2 = (entity.x + entity.radius) * zoom + tx
                         y1 = (entity.y - entity.radius) * zoom + ty
                         y2 = (entity.y + entity.radius) * zoom + ty
-                        self.window.create_oval(x1, self.height - y1, x2, self.height - y2)
+                        color = tools.COLORS[df.get_layer(entity.layer_name).color_index]
+                        self.window.create_oval(x1, self.height - y1, x2, self.height - y2, outline=color)
                     elif entity.name == 'ARC':
                         x1 = (entity.x - entity.radius) * zoom + tx
                         x2 = (entity.x + entity.radius) * zoom + tx
@@ -57,7 +59,8 @@ class DxfWindow(object):
                             ea = entity.end_angle + (360 - entity.start_angle)
                         else:
                             ea = entity.end_angle - entity.start_angle
-                        self.window.create_arc(x1, self.height - y1, x2, self.height - y2, start=sa, extent=ea, style=tk.ARC)
+                        color = tools.COLORS[df.get_layer(entity.layer_name).color_index]
+                        self.window.create_arc(x1, self.height - y1, x2, self.height - y2, start=sa, extent=ea, style=tk.ARC, outline=color)
 
         self.window.create_text(self.width - 60, self.height - 15, text='Scale: %s' % self.SCALE)
 
@@ -98,8 +101,6 @@ if __name__ == '__main__':
 
     fi = open(sys.argv[1], 'rt')
     df = pydxf.DxfFile.make_file(tools.ascii_record_iterator(fi))
-    # print 'Version: %s' % df.get_section('HEADER').get_variable('ACADVER')
-
     dw = DxfWindow(df)
     dw.redraw()
 

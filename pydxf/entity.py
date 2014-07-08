@@ -60,13 +60,16 @@ class ArcEntity(DxfEntity):
         self.radius = 0
         self.start_angle = 0
         self.end_angle = 0
+        self.layer_name = ''
 
     @staticmethod
     def make_entity(records):
         entity = ArcEntity()
 
         for rec in records:
-            if rec.code == 10:
+            if rec.code == 8:
+                entity.layer_name = rec.value
+            elif rec.code == 10:
                 entity.x = float(rec.value)
             elif rec.code == 20:
                 entity.y = float(rec.value)
@@ -90,13 +93,16 @@ class CircleEntity(DxfEntity):
         self.x = 0
         self.y = 0
         self.radius = 0
+        self.layer_name = ''
 
     @staticmethod
     def make_entity(records):
         entity = CircleEntity()
 
         for rec in records:
-            if rec.code == 10:
+            if rec.code == 8:
+                entity.layer_name = rec.value
+            elif rec.code == 10:
                 entity.x = float(rec.value)
             elif rec.code == 20:
                 entity.y = float(rec.value)

@@ -1,6 +1,7 @@
 import collections
 import entity
 import section
+import table
 import tools
 
 
@@ -102,16 +103,10 @@ class DxfFile(object):
         return dxf_file
 
     def iter_sections(self):
-        if not self.sections:
-            self.parse_sections()
-
         for section in self.sections:
             yield section
 
     def get_section(self, name):
-        if not self.sections:
-            self.parse_sections()
-
         for section in self.sections:
             if section.name == name:
                 return section
@@ -121,3 +116,18 @@ class DxfFile(object):
             if section.name == new_section.name:
                 self.sections[i] = new_section
                 break
+
+    def get_layer(self, layer_name):
+        table_sec = self.get_section('TABLES')
+        if not table_sec:
+            return table.DxfLayer.make_default_layer(layer_name)
+
+        layer_tab = table_sec.get_table('LAYER')
+        if not layer_tab:
+            return table.DxfLayer.make_default_layer(layer_name)
+
+        for layer in layer_tab.iter_layers():
+            if layer.name == layer_name:
+                return layer
+
+        return table.DxfLayer.make_default_layer(layer_name)

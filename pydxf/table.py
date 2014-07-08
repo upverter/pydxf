@@ -96,6 +96,13 @@ class DxfLayer(object):
             if record.code == 2:
                 layer.name = record.value
             elif record.code == 62:
-                layer.color_index = record.value
+                layer.color_index = int(record.value)
 
+        return layer
+
+    @staticmethod
+    def make_default_layer(name):
+        layer = DxfLayer()
+        layer.name = name
+        layer.color_index = 0
         return layer
