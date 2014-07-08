@@ -5,40 +5,100 @@ import tools
 
 
 
+class DxfWindow(object):
+
+    def __init__(self, file):
+        self.width = 750
+        self.height = 600
+        self.SCALE = 40
+        self.SHIFT_X = -300
+        self.SHIFT_Y = 380
+        self.file = file
+
+        self.move_x = 0
+        self.move_y = 0
+
+        m = tk.Tk()
+        self.window = tk.Canvas(m, width=self.width, height=self.height)
+        self.window.pack()
+        self.window.bind('<Button-1>', self.mouse_down)
+        self.window.bind('<ButtonRelease-1>', self.mouse_up)
+        self.window.bind('<Button-4>', self.wheel_up)
+        self.window.bind('<Button-5>', self.wheel_down)
+
+    def draw_dxf(self, tx, ty, zoom):
+        self.window.create_rectangle(0, 0, self.width, self.height, fill="white")
+
+        for section in self.file.iter_sections():
+            for rec in section.iter_records():
+                pass
+            if section.name == 'ENTITIES':
+                for entity in section.iter_entities():
+                    if entity.name == 'LINE':
+                        x1 = entity.x1 * zoom + tx
+                        x2 = entity.x2 * zoom + tx
+                        y1 = entity.y1 * zoom + ty
+                        y2 = entity.y2 * zoom + ty
+                        self.window.create_line(x1, self.height - y1, x2, self.height - y2)
+                        # print '\tLINE %s,%s to %s,%s' % (entity.x1, entity.y1, entity.x2, entity.y2)
+                    elif entity.name == 'CIRCLE':
+                        x1 = (entity.x - entity.radius) * zoom + tx
+                        x2 = (entity.x + entity.radius) * zoom + tx
+                        y1 = (entity.y - entity.radius) * zoom + ty
+                        y2 = (entity.y + entity.radius) * zoom + ty
+                        self.window.create_oval(x1, self.height - y1, x2, self.height - y2)
+                    elif entity.name == 'ARC':
+                        x1 = (entity.x - entity.radius) * zoom + tx
+                        x2 = (entity.x + entity.radius) * zoom + tx
+                        y1 = (entity.y - entity.radius) * zoom + ty
+                        y2 = (entity.y + entity.radius) * zoom + ty
+                        sa = entity.start_angle
+                        if entity.start_angle > entity.end_angle:
+                            ea = entity.end_angle + (360 - entity.start_angle)
+                        else:
+                            ea = entity.end_angle - entity.start_angle
+                        self.window.create_arc(x1, self.height - y1, x2, self.height - y2, start=sa, extent=ea, style=tk.ARC)
+
+    def mouse_down(self, event):
+        # print 'Mouse'
+        self.move_x = event.x
+        self.move_y = event.y
+
+    def mouse_up(self, event):
+        delta_x = event.x - self.move_x
+        delta_y = event.y - self.move_y
+        self.SHIFT_X += delta_x
+        self.SHIFT_Y -= delta_y
+        self.redraw()
+
+    def wheel_up(self, event):
+        # print 'Wheel up'
+        self.SCALE += 5
+        self.redraw()
+
+    def wheel_down(self, event):
+        # print 'Wheel down'
+        self.SCALE -= 5
+        self.redraw()
+
+    def redraw(self):
+        self.draw_dxf(self.SHIFT_X, self.SHIFT_Y, self.SCALE)
+
+
 if __name__ == '__main__':
-    WINDOW_WIDTH = 500
-    WINDOW_HEIGHT = 400
-    m = tk.Tk()
-    window = tk.Canvas(m, width=WINDOW_WIDTH, height=WINDOW_HEIGHT)
-    window.pack()
-    window.create_rectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, fill="white")
+
 
     fi = open(sys.argv[1], 'rt')
     df = pydxf.DxfFile.make_file(tools.ascii_record_iterator(fi))
     # print 'Version: %s' % df.get_section('HEADER').get_variable('ACADVER')
 
-    # df = DxfFile(fi)
-    for section in df.iter_sections():
-        # print section.name
-        for rec in section.iter_records():
-            pass
-            # print '\t%s %s' % (rec.code, rec.value)
-        if section.name == 'ENTITIES':
-            for entity in section.iter_entities():
-                # print entity.name
-                if entity.name == 'LINE':
-                    # window.create_line(25+entity.x1*40, WINDOW_HEIGHT-(25+entity.y1*40), 25+entity.x2*40, WINDOW_HEIGHT-(25+entity.y2*40))
-                    window.create_line(25+entity.x1, WINDOW_HEIGHT-(25+entity.y1), 25+entity.x2, WINDOW_HEIGHT-(25+entity.y2))
-                    # print '\tLINE %s,%s to %s,%s' % (entity.x1, entity.y1, entity.x2, entity.y2)
+    dw = DxfWindow(df)
+    dw.redraw()
 
     # layer_table = df.get_section('TABLES').get_table('LAYER')
     # for layer in layer_table.iter_layers():
     #     print '%s %s' % (layer.name, layer.color_index)
 
-    # window.create_line(40, 40, 40, 360)
-    # window.create_line(40, 360, 360, 40, fill="green")
-    # window.create_line(40, 360, 360, 360)
-    # drawing.draw(window)
     tk.mainloop()
 
 

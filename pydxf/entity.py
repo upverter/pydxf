@@ -48,6 +48,66 @@ class DxfEntity(object):
             DxfEntity.entity_factories[cls.ENTITY_TYPE] = cls.make_entity
 
 
+class ArcEntity(DxfEntity):
+
+    ENTITY_TYPE = 'ARC'
+
+    def __init__(self):
+        super(ArcEntity, self).__init__()
+        self.name = ArcEntity.ENTITY_TYPE
+        self.x = 0
+        self.y = 0
+        self.radius = 0
+        self.start_angle = 0
+        self.end_angle = 0
+
+    @staticmethod
+    def make_entity(records):
+        entity = ArcEntity()
+
+        for rec in records:
+            if rec.code == 10:
+                entity.x = float(rec.value)
+            elif rec.code == 20:
+                entity.y = float(rec.value)
+            elif rec.code == 40:
+                entity.radius = float(rec.value)
+            elif rec.code == 50:
+                entity.start_angle = float(rec.value)
+            elif rec.code == 51:
+                entity.end_angle = float(rec.value)
+
+        return entity
+
+
+class CircleEntity(DxfEntity):
+
+    ENTITY_TYPE = 'CIRCLE'
+
+    def __init__(self):
+        super(CircleEntity, self).__init__()
+        self.name = CircleEntity.ENTITY_TYPE
+        self.x = 0
+        self.y = 0
+        self.radius = 0
+
+    @staticmethod
+    def make_entity(records):
+        entity = CircleEntity()
+
+        for rec in records:
+            if rec.code == 10:
+                entity.x = float(rec.value)
+            elif rec.code == 20:
+                entity.y = float(rec.value)
+            elif rec.code == 40:
+                entity.radius = float(rec.value)
+            else:
+                entity.add_records(rec)
+
+        return entity
+
+
 class LineEntity(DxfEntity):
 
     ENTITY_TYPE = 'LINE'
