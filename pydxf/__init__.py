@@ -117,6 +117,24 @@ class DxfFile(object):
                 self.sections[i] = new_section
                 break
 
+    def get_layers(self):
+        all_layers = {}
+
+        table_sec = self.get_section('TABLES')
+        if table_sec:
+            layer_tab = table_sec.get_table('LAYER')
+            if layer_tab:
+                for layer in layer_tab.iter_layers():
+                    all_layers[layer.name] = layer
+
+        entities_sec = self.get_section('ENTITIES')
+        if entities_sec:
+            for entity in entities_sec.iter_entities():
+                if entity.layer_name not in all_layers:
+                    all_layers[entity.layer_name] = table.DxfLayer.make_default_layer(entity.layer_name)
+
+        return all_layers.values()
+
     def get_layer(self, layer_name):
         table_sec = self.get_section('TABLES')
         if not table_sec:

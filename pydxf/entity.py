@@ -11,6 +11,7 @@ class DxfEntity(object):
     def __init__(self):
         self.name = ''
         self.records = []
+        self.layer_name = ''
 
     def add_records(self, record):
         tools.list_extend(self.records, record)
@@ -24,7 +25,12 @@ class DxfEntity(object):
         # Don't worry about error checking. Should be done already.
         entity = DxfEntity()
         entity.name = records[0].value
-        entity.add_records(records[1:])
+
+        for rec in records[1:]:
+            if rec.code == 8:
+                entity.layer_name = rec.value
+            else:
+                entity.add_records(rec)
 
         return entity
 
@@ -79,6 +85,8 @@ class ArcEntity(DxfEntity):
                 entity.start_angle = float(rec.value)
             elif rec.code == 51:
                 entity.end_angle = float(rec.value)
+            else:
+                entity.add_records(rec)
 
         return entity
 

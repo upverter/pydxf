@@ -104,6 +104,9 @@ if __name__ == '__main__':
     dw = DxfWindow(df)
     dw.redraw()
 
+    layers = df.get_layers()
+    for l in layers:
+        print l.name
     # layer_table = df.get_section('TABLES').get_table('LAYER')
     # for layer in layer_table.iter_layers():
     #     print '%s %s' % (layer.name, layer.color_index)
