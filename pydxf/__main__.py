@@ -10,9 +10,9 @@ class DxfWindow(object):
     def __init__(self, file):
         self.width = 750
         self.height = 600
-        self.SCALE = 40
-        self.SHIFT_X = -300
-        self.SHIFT_Y = 380
+        self.SCALE = 1
+        self.SHIFT_X = 0
+        self.SHIFT_Y = 0
         self.file = file
 
         self.move_x = 0
@@ -59,6 +59,8 @@ class DxfWindow(object):
                             ea = entity.end_angle - entity.start_angle
                         self.window.create_arc(x1, self.height - y1, x2, self.height - y2, start=sa, extent=ea, style=tk.ARC)
 
+        self.window.create_text(self.width - 60, self.height - 15, text='Scale: %s' % self.SCALE)
+
     def mouse_down(self, event):
         # print 'Mouse'
         self.move_x = event.x
@@ -73,12 +75,18 @@ class DxfWindow(object):
 
     def wheel_up(self, event):
         # print 'Wheel up'
-        self.SCALE += 5
+        if self.SCALE >= 5:
+            self.SCALE += 5
+        else:
+            self.SCALE += 1
         self.redraw()
 
     def wheel_down(self, event):
         # print 'Wheel down'
-        self.SCALE -= 5
+        if self.SCALE <= 5:
+            self.SCALE -= 1
+        else:
+            self.SCALE -= 5
         self.redraw()
 
     def redraw(self):
