@@ -1,7 +1,7 @@
 import collections
 import copy
 import pydxf
-from pydxf import entity, table, tools
+import entity, table, tools
 
 
 
