@@ -99,7 +99,8 @@ class DxfFile(object):
             # The file appears to have been truncated because we never got an ENDSEC for the last section we were
             # working on. LibreCAD seems to create files like this.
             section_records.append(DxfRecord(0, 'ENDSEC'))
-            dxf_file.sections.append(section.DxfSection.make_section(section_records))
+            new_section = section.DxfSection.make_section(section_records)
+            dxf_file._sections[new_section.name] = new_section
 
         return dxf_file
 
@@ -111,15 +112,15 @@ class DxfFile(object):
     def layers(self):
         all_layers = tools.keyfaultdict(table.DxfLayer.make_default_layer)
 
-        table_sec = self.sections['TABLES']
+        table_sec = self.sections.get('TABLES', None)
         if table_sec:
-            layer_tab = table_sec.tables['LAYER']
+            layer_tab = table_sec.tables.get('LAYER', None)
             if layer_tab:
                 for layer in layer_tab.layers:
                     all_layers[layer.name] = layer
 
         # Explicitly create default layers from the ENTITIES section so that (x in layers) works as expected
-        entities_sec = self.sections['ENTITIES']
+        entities_sec = self.sections.get('ENTITIES', None)
         if entities_sec:
             for entity in entities_sec.entities:
                 if entity.layer_name not in all_layers:

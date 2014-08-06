@@ -1,5 +1,6 @@
 import itertools
 import pydxf
+from pydxf.pydxf import DxfRecord
 import pydxf.tools
 import StringIO
 import unittest
@@ -55,22 +56,22 @@ class DxfParseTests(unittest.TestCase):
         0
         ENDSEC'''
         records = itertools.islice(pydxf.tools.ascii_record_iterator(StringIO.StringIO(dxf)), 2, None)
-        block_iter = pydxf.tools.record_block_iterator(records, pydxf.DxfRecord(0, None), pydxf.DxfRecord(0, None))
+        block_iter = pydxf.tools.record_block_iterator(records, DxfRecord(0, None), DxfRecord(0, None))
         b1 = block_iter.next()
         assert len(b1) == 3
-        assert b1[0].matches(pydxf.DxfRecord(0, 'LINE'))
-        assert b1[1].matches(pydxf.DxfRecord(8, '0'))
-        assert b1[2].matches(pydxf.DxfRecord(10, '0'))
+        assert b1[0].matches(DxfRecord(0, 'LINE'))
+        assert b1[1].matches(DxfRecord(8, '0'))
+        assert b1[2].matches(DxfRecord(10, '0'))
         b2 = block_iter.next()
         assert len(b2) == 3
-        assert b2[0].matches(pydxf.DxfRecord(0, 'LINE'))
-        assert b2[1].matches(pydxf.DxfRecord(8, '0'))
-        assert b2[2].matches(pydxf.DxfRecord(10, '1'))
+        assert b2[0].matches(DxfRecord(0, 'LINE'))
+        assert b2[1].matches(DxfRecord(8, '0'))
+        assert b2[2].matches(DxfRecord(10, '1'))
         self.assertRaises(StopIteration, block_iter.next)
 
         top_level = block_iter.get_top_level_records()
         assert len(top_level) == 1
-        assert top_level[0].matches(pydxf.DxfRecord(999, 'This is a comment'))
+        assert top_level[0].matches(DxfRecord(999, 'This is a comment'))
 
     def test_block_iterator_sections(self):
         dxf = '''0
@@ -90,23 +91,23 @@ class DxfParseTests(unittest.TestCase):
         0
         EOF'''
         records = pydxf.tools.ascii_record_iterator(StringIO.StringIO(dxf))
-        block_iter = pydxf.tools.record_block_iterator(records, pydxf.DxfRecord(0, 'SECTION'), pydxf.DxfRecord(0, 'ENDSEC'), True)
+        block_iter = pydxf.tools.record_block_iterator(records, DxfRecord(0, 'SECTION'), DxfRecord(0, 'ENDSEC'), True)
         b1 = block_iter.next()
         assert len(b1) == 3
-        assert b1[0].matches(pydxf.DxfRecord(0, 'SECTION'))
-        assert b1[1].matches(pydxf.DxfRecord(2, 'ENTITIES'))
-        assert b1[2].matches(pydxf.DxfRecord(0, 'ENDSEC'))
+        assert b1[0].matches(DxfRecord(0, 'SECTION'))
+        assert b1[1].matches(DxfRecord(2, 'ENTITIES'))
+        assert b1[2].matches(DxfRecord(0, 'ENDSEC'))
         b2 = block_iter.next()
         assert len(b2) == 3
-        assert b2[0].matches(pydxf.DxfRecord(0, 'SECTION'))
-        assert b2[1].matches(pydxf.DxfRecord(2, 'TABLES'))
-        assert b2[2].matches(pydxf.DxfRecord(0, 'ENDSEC'))
+        assert b2[0].matches(DxfRecord(0, 'SECTION'))
+        assert b2[1].matches(DxfRecord(2, 'TABLES'))
+        assert b2[2].matches(DxfRecord(0, 'ENDSEC'))
         self.assertRaises(StopIteration, block_iter.next)
 
         top_level = block_iter.get_top_level_records()
         assert len(top_level) == 2
-        assert top_level[0].matches(pydxf.DxfRecord(999, 'This is a comment'))
-        assert top_level[1].matches(pydxf.DxfRecord(0, 'EOF'))
+        assert top_level[0].matches(DxfRecord(999, 'This is a comment'))
+        assert top_level[1].matches(DxfRecord(0, 'EOF'))
 
     def test_block_iterator_multi_end(self):
         dxf = '''0
@@ -126,31 +127,29 @@ class DxfParseTests(unittest.TestCase):
         0
         ENDSEC'''
         records = pydxf.tools.ascii_record_iterator(StringIO.StringIO(dxf))
-        block_iter = pydxf.tools.record_block_iterator(records, pydxf.DxfRecord(0, 'SECTION'), [pydxf.DxfRecord(0, 'ENDSEC'), pydxf.DxfRecord(0, 'EOF')], True)
+        block_iter = pydxf.tools.record_block_iterator(records, DxfRecord(0, 'SECTION'), [DxfRecord(0, 'ENDSEC'), DxfRecord(0, 'EOF')], True)
         b1 = block_iter.next()
         assert len(b1) == 3
-        assert b1[0].matches(pydxf.DxfRecord(0, 'SECTION'))
-        assert b1[1].matches(pydxf.DxfRecord(2, 'ENTITIES'))
-        assert b1[2].matches(pydxf.DxfRecord(0, 'ENDSEC'))
+        assert b1[0].matches(DxfRecord(0, 'SECTION'))
+        assert b1[1].matches(DxfRecord(2, 'ENTITIES'))
+        assert b1[2].matches(DxfRecord(0, 'ENDSEC'))
         b2 = block_iter.next()
         assert len(b2) == 3
-        assert b2[0].matches(pydxf.DxfRecord(0, 'SECTION'))
-        assert b2[1].matches(pydxf.DxfRecord(2, 'TABLES'))
-        assert b2[2].matches(pydxf.DxfRecord(0, 'EOF'))
+        assert b2[0].matches(DxfRecord(0, 'SECTION'))
+        assert b2[1].matches(DxfRecord(2, 'TABLES'))
+        assert b2[2].matches(DxfRecord(0, 'EOF'))
         self.assertRaises(StopIteration, block_iter.next)
 
         top_level = block_iter.get_top_level_records()
         assert len(top_level) == 2
-        assert top_level[0].matches(pydxf.DxfRecord(999, 'This is a comment'))
-        assert top_level[1].matches(pydxf.DxfRecord(0, 'ENDSEC'))
+        assert top_level[0].matches(DxfRecord(999, 'This is a comment'))
+        assert top_level[1].matches(DxfRecord(0, 'ENDSEC'))
 
     def test_parse_simple_file(self):
-        df = pydxf.DxfFile.make_file(pydxf.tools.ascii_record_iterator(StringIO.StringIO(DxfParseTests.SIMPLE)))
-        assert len(list(df.iter_sections())) == 1
-        sec = df.get_section('ENTITIES')
-        for rec in sec.iter_records():
-            print rec
-        assert len(list(sec.iter_records())) == 0
+        df = pydxf.pydxf.DxfFile.make_file(pydxf.tools.ascii_record_iterator(StringIO.StringIO(DxfParseTests.SIMPLE)))
+        assert len(list(df.sections)) == 1
+        sec = df.sections['ENTITIES']
+        assert len(list(sec.records)) == 0
 
     def test_parse_truncated_file(self):
         # These kinds of truncated files appear to be generated by some versions of LibreCad
@@ -160,10 +159,10 @@ class DxfParseTests(unittest.TestCase):
         ENTITIES
         ''')
 
-        df = pydxf.DxfFile.make_file(pydxf.tools.ascii_record_iterator(dxf))
-        assert len(list(df.iter_sections())) == 1
-        sec = df.get_section('ENTITIES')
-        assert len(list(sec.iter_records())) == 0
+        df = pydxf.pydxf.DxfFile.make_file(pydxf.tools.ascii_record_iterator(dxf))
+        assert len(list(df.sections)) == 1
+        sec = df.sections['ENTITIES']
+        assert len(list(sec.records)) == 0
 
     def test_list_extend_single(self):
         base_list = [1, 2]
