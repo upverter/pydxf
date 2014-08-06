@@ -11,14 +11,14 @@ class DxfSection(object):
 
     def __init__(self):
         self.name = ''
-        self.records = []
+        self._records = []
 
     def add_records(self, record):
-        tools.list_extend(self.records, record)
+        tools.list_extend(self._records, record)
 
-    def iter_records(self):
-        for rec in self.records:
-            yield rec
+    @property
+    def records(self):
+        return self._records
 
     @staticmethod
     def __make_default_section(records):
@@ -65,9 +65,14 @@ class EntitiesSection(DxfSection):
     def add_entities(self, entity):
         tools.list_extend(self.entities, entity)
 
-    def iter_entities(self):
-        for entity in self.entities:
-            yield entity
+    def __len__(self):
+        return len(self.entities)
+
+    def __getitem__(self, key):
+        return self.entities[key]
+
+    def __iter__(self):
+        return self.entities.__iter__()
 
     @staticmethod
     def make_section(records):
@@ -91,8 +96,26 @@ class HeaderSection(DxfSection):
         self.name = HeaderSection.SECTION_TYPE
         self.variables = collections.defaultdict(lambda: None)
 
-    def get_variable(self, name):
-        return self.variables[name]
+    def __len__(self):
+        return len(self.variables)
+
+    def __getitem__(self, key):
+        return self.variables[key]
+
+    def __iter__(self):
+        return self.variables.__iter__()
+
+    def iterkeys(self):
+        return self.__iter__()
+
+    def itervalues(self):
+        return self.variables.itervalues()
+
+    def iteritems(self):
+        return self.variables.iteritems()
+
+    def __contains__(self, key):
+        return key in self.variables
 
     @staticmethod
     def make_section(records):
@@ -125,15 +148,29 @@ class TablesSection(DxfSection):
         self.name = TablesSection.SECTION_TYPE
         self.tables = collections.defaultdict(lambda: None)
 
-    def get_table(self, name):
-        return self.tables[name]
+    def __len__(self):
+        return len(self.tables)
+
+    def __getitem__(self, key):
+        return self.tables[key]
+
+    def __iter__(self):
+        return self.tables.__iter__()
+
+    def iterkeys(self):
+        return self.__iter__()
+
+    def itervalues(self):
+        return self.tables.itervalues()
+
+    def iteritems(self):
+        return self.tables.iteritems()
+
+    def __contains__(self, key):
+        return key in self.tables
 
     def add_table(self, table):
         self.tables[table.name] = table
-
-    def iter_tables(self):
-        for table in self.tables.values():
-            yield table
 
     @staticmethod
     def make_section(records):

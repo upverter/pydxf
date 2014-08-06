@@ -10,14 +10,14 @@ class DxfTable(object):
 
     def __init__(self):
         self.name = ''
-        self.records = []
+        self._records = []
 
     def add_records(self, record):
-        tools.list_extend(self.records, record)
+        tools.list_extend(self._records, record)
 
-    def iter_records(self):
-        for rec in self.records:
-            yield rec
+    @property
+    def records(self):
+        return self._records
 
     @staticmethod
     def __make_default_table(records):
@@ -58,14 +58,14 @@ class LayerTable(DxfTable):
     def __init__(self):
         super(LayerTable, self).__init__()
         self.name = LayerTable.TABLE_TYPE
-        self.layers = []
+        self._layers = []
 
     def add_layers(self, layer):
-        tools.list_extend(self.layers, layer)
+        tools.list_extend(self._layers, layer)
 
-    def iter_layers(self):
-        for layer in self.layers:
-            yield layer
+    @property
+    def layers(self):
+        return self._layers
 
     @staticmethod
     def make_table(records):

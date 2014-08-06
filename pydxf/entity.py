@@ -10,15 +10,15 @@ class DxfEntity(object):
 
     def __init__(self):
         self.name = ''
-        self.records = []
+        self._records = []
         self.layer_name = ''
 
     def add_records(self, record):
-        tools.list_extend(self.records, record)
+        tools.list_extend(self._records, record)
 
-    def iter_records(self):
-        for rec in self.records:
-            yield rec
+    @property
+    def records(self):
+        return self._records
 
     @staticmethod
     def __make_default_entity(records):

@@ -60,7 +60,7 @@ class DxfFile(object):
     section_factories = {}
 
     def __init__(self):
-        self.sections = []
+        self._sections = {}
 
     @staticmethod
     def make_file(records):
@@ -78,7 +78,8 @@ class DxfFile(object):
                 section_records.append(rec)
                 if rec.is_section_end():
                     building_section_records = False
-                    dxf_file.sections.append(section.DxfSection.make_section(section_records))
+                    new_section = section.DxfSection.make_section(section_records)
+                    dxf_file._sections[new_section.name] = new_section
             else:
                 if rec.code == 0 and rec.value == 'SECTION':
                     building_section_records = True
@@ -102,50 +103,26 @@ class DxfFile(object):
 
         return dxf_file
 
-    def iter_sections(self):
-        for section in self.sections:
-            yield section
+    @property
+    def sections(self):
+        return self._sections
 
-    def get_section(self, name):
-        for section in self.sections:
-            if section.name == name:
-                return section
+    @property
+    def layers(self):
+        all_layers = tools.keyfaultdict(table.DxfLayer.make_default_layer)
 
-    def update_section(self, new_section):
-        for i, section in enumerate(self.sections):
-            if section.name == new_section.name:
-                self.sections[i] = new_section
-                break
-
-    def get_layers(self):
-        all_layers = {}
-
-        table_sec = self.get_section('TABLES')
+        table_sec = self.sections['TABLES']
         if table_sec:
-            layer_tab = table_sec.get_table('LAYER')
+            layer_tab = table_sec.tables['LAYER']
             if layer_tab:
-                for layer in layer_tab.iter_layers():
+                for layer in layer_tab.layers:
                     all_layers[layer.name] = layer
 
-        entities_sec = self.get_section('ENTITIES')
+        # Explicitly create default layers from the ENTITIES section so that (x in layers) works as expected
+        entities_sec = self.sections['ENTITIES']
         if entities_sec:
-            for entity in entities_sec.iter_entities():
+            for entity in entities_sec.entities:
                 if entity.layer_name not in all_layers:
                     all_layers[entity.layer_name] = table.DxfLayer.make_default_layer(entity.layer_name)
 
-        return all_layers.values()
-
-    def get_layer(self, layer_name):
-        table_sec = self.get_section('TABLES')
-        if not table_sec:
-            return table.DxfLayer.make_default_layer(layer_name)
-
-        layer_tab = table_sec.get_table('LAYER')
-        if not layer_tab:
-            return table.DxfLayer.make_default_layer(layer_name)
-
-        for layer in layer_tab.iter_layers():
-            if layer.name == layer_name:
-                return layer
-
-        return table.DxfLayer.make_default_layer(layer_name)
+        return all_layers

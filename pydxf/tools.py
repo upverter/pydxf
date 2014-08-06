@@ -26,6 +26,19 @@ def list_extend(list, items):
         list.append(items)
 
 
+class keyfaultdict(collections.defaultdict):
+    ''' Functions similarly to the standard library's default dict, but calls the default factory function with the
+        missing key as the first argument.
+    '''
+
+    def __missing__(self, key):
+        if self.default_factory is None:
+            raise KeyError(key)
+        value = self.default_factory(key)
+        self[key] = value
+        return value
+
+
 class record_block_iterator(object):
     ''' Given a iterable collection of records, group the collection into lists of records using the block_start and
         block_end rules to determine block boundaries. Once the generator has run through completely, any records from
