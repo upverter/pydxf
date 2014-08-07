@@ -26,6 +26,22 @@ def list_extend(list, items):
         list.append(items)
 
 
+def is_ascii_dxf(stream):
+    ''' Given a stream, determine if the stream contents represent an ASCII DXF file.
+        This function reads an arbitrary amount of data from the stream, and does not attempt to return the stream to
+        its original state.
+    '''
+
+    # Just try to read 5 records from the stream. If that succeeds, it's probably an ASCII DXF file.
+    for i in xrange(5):
+        try:
+            rec = pydxf.DxfRecord.parse_from_stream(stream)
+        except pydxf.FormatException:
+            return False
+
+    return True
+
+
 class keyfaultdict(collections.defaultdict):
     ''' Functions similarly to the standard library's default dict, but calls the default factory function with the
         missing key as the first argument.

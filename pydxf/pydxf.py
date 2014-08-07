@@ -37,7 +37,7 @@ class DxfRecord(object):
         try:
             record = DxfRecord(group, value)
         except ValueError:
-            raise FormatException('Read group number <%s> is not a number.', group)
+            raise FormatException('Read group number <%s> is not a number.' % group)
 
         return record
 
