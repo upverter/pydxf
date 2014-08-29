@@ -91,33 +91,6 @@ class HeaderSection(DxfSection):
 
     SECTION_TYPE = 'HEADER'
 
-    class ANGDIR(object):
-        COUNTERCLOCKWISE = 0
-        CLOCKWISE = 1
-
-    class INSUNITS(object):
-        UNITLESS = 0
-        INCHES = 1
-        FEET = 2
-        MILES = 3
-        MILLIMETERS = 4
-        CENTIMETERS = 5
-        METERS = 6
-        KILOMETERS = 7
-        MICROINCHES = 8
-        MILS = 9
-        YARDS = 10
-        ANGSTROMS = 11
-        NANOMETERS = 12
-        MICRONS = 13
-        DECIMETERS = 14
-        DECAMETERS = 15
-        HECTOMETERS = 16
-        GIGAMETERS = 17
-        ASTRONOMICAL_UNITS = 18
-        LIGHT_YEARS = 19
-        PARSECS = 20
-
     def __init__(self):
         super(HeaderSection, self).__init__()
         self.name = HeaderSection.SECTION_TYPE

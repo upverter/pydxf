@@ -1,5 +1,6 @@
 import collections
 import copy
+import decimal
 import pydxf
 
 
@@ -42,8 +43,45 @@ def is_ascii_dxf(stream):
     return True
 
 
+def convert_units(measurement, source_units, target_units):
+    ''' Convert a number from one unit of measurement to another.
+        source_units and target_units can be any string as found in the INSUNITS map, or key used to look up a value
+        from that map.
+    '''
+
+    source = source_units if type(source_units) == str else INSUNITS[source_units]
+    target = target_units if type(target_units) == str else INSUNITS[source_units]
+    return convert_from_meters(convert_to_meters(measurement, source), target)
+
+
+def convert_to_meters(measurement, source_units):
+    ''' Convert a number from some unit of measurement to meters.
+        source_units can be any string as found in the INSUNITS map, or a key used to look up a value from that map.
+    '''
+
+    source = source_units if type(source_units) == str else INSUNITS[source_units]
+
+    if source not in VALUE_IN_METERS:
+        raise ValueError('Unknown source units {}'.format(source))
+
+    return decimal.Decimal(measurement) * VALUE_IN_METERS[source]
+
+
+def convert_from_meters(measurement, target_units):
+    ''' Convert a number from a measurement in meters to some other unit.
+        target_units can be any string as found in the INSUNITS map, or a key used to look up a value from that map.
+    '''
+
+    target = target_units if type(target_units) == str else INSUNITS[target_units]
+
+    if target not in VALUE_IN_METERS:
+        raise ValueError('Unknown target units {}'.format(target))
+
+    return decimal.Decimal(measurement) / VALUE_IN_METERS[target]
+
+
 class keyfaultdict(collections.defaultdict):
-    ''' Functions similarly to the standard library's default dict, but calls the default factory function with the
+    ''' Functions similarly to the standard library's defaultdict, but calls the default factory function with the
         missing key as the first argument.
     '''
 
@@ -121,6 +159,60 @@ class record_block_iterator(object):
             raise StopIteration
 
         return record_set
+
+
+ANGDIR = {
+    0: 'COUNTERCLOCKWISE',
+    1: 'CLOCKWISE'
+}
+
+INSUNITS = {
+    0: 'UNITLESS',
+    1: 'INCHES',
+    2: 'FEET',
+    3: 'MILES',
+    4: 'MILLIMETERS',
+    5: 'CENTIMETERS',
+    6: 'METERS',
+    7: 'KILOMETERS',
+    8: 'MICROINCHES',
+    9: 'MILS',
+    10: 'YARDS',
+    11: 'ANGSTROMS',
+    12: 'NANOMETERS',
+    13: 'MICRONS',
+    14: 'DECIMETERS',
+    15: 'DECAMETERS',
+    16: 'HECTOMETERS',
+    17: 'GIGAMETERS',
+    18: 'ASTRONOMICAL_UNITS',
+    19: 'LIGHT_YEARS',
+    20: 'PARSECS'
+}
+
+VALUE_IN_METERS = {
+    'ANGSTROMS': decimal.Decimal('0.0000000001'),
+    'NANOMETERS': decimal.Decimal('0.000000001'),
+    'MICRONS': decimal.Decimal('0.000001'),
+    'MILLIMETERS': decimal.Decimal('0.001'),
+    'CENTIMETERS': decimal.Decimal('0.01'),
+    'DECIMETERS': decimal.Decimal('0.1'),
+    'METERS': decimal.Decimal('1'),
+    'UNITLESS': decimal.Decimal('1'),
+    'DECAMETERS': decimal.Decimal('10'),
+    'HECTOMETERS': decimal.Decimal('100'),
+    'KILOMETERS': decimal.Decimal('1000'),
+    'GIGAMETERS': decimal.Decimal('1000000000'),
+    'ASTRONOMICAL_UNITS': decimal.Decimal('149597870700'),
+    'LIGHT_YEARS': decimal.Decimal('9460730472580800'),
+    'PARSECS': decimal.Decimal('30856776376340066.65169031476'),
+    'MICROINCHES': decimal.Decimal('0.0000000254'),
+    'MILS': decimal.Decimal('0.0000254'),
+    'INCHES': decimal.Decimal('0.0254'),
+    'FEET': decimal.Decimal('0.3048'),
+    'YARDS': decimal.Decimal('0.9144'),
+    'MILES': decimal.Decimal('1609.344'),
+}
 
 COLORS = {
     0: '#000000',

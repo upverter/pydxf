@@ -1,3 +1,4 @@
+import decimal
 import itertools
 import pydxf
 from pydxf.pydxf import DxfRecord
@@ -180,6 +181,20 @@ class DxfParseTests(unittest.TestCase):
         assert base_list[1] == 2
         assert base_list[2] == 3
         assert base_list[3] == 4
+
+    def test_convert_to_meters(self):
+        self.assertEqual(pydxf.tools.convert_to_meters(6, 'INCHES'), decimal.Decimal('0.1524'))
+        self.assertEqual(pydxf.tools.convert_to_meters(50, 4), decimal.Decimal('0.05'))
+        self.assertEqual(pydxf.tools.convert_to_meters(1000, 'MICRONS'), decimal.Decimal('0.001'))
+
+    def test_convert_from_meters(self):
+        self.assertEqual(pydxf.tools.convert_from_meters(decimal.Decimal('0.1524'), 'INCHES'), decimal.Decimal('6'))
+        self.assertEqual(pydxf.tools.convert_from_meters(decimal.Decimal('0.05'), 4), decimal.Decimal('50'))
+        self.assertEqual(pydxf.tools.convert_from_meters(decimal.Decimal('0.001'), 'MICRONS'), decimal.Decimal('1000'))
+
+    def test_convert_units(self):
+        self.assertEqual(pydxf.tools.convert_units(6, 'INCHES', 'NANOMETERS'), decimal.Decimal('152400000'))
+        self.assertEqual(pydxf.tools.convert_units(50, 'MILLIMETERS', 'NANOMETERS'), decimal.Decimal('50000000'))
 
 if __name__ == '__main__':
     unittest.main()
