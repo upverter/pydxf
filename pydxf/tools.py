@@ -80,6 +80,40 @@ def convert_from_meters(measurement, target_units):
     return decimal.Decimal(measurement) / VALUE_IN_METERS[target]
 
 
+def swap_arc_winding(dfile):
+    ''' Utility function for reversing the direction of all arcs in a file. Useful if a file's ANGDIR variable is set
+        to clockwise, but you need it counter-clockwise, for example.
+        An arc starting at 45 degrees and ending at 135 will be changed to start at 315 and end at 225.
+        The provided dfile will be modified in place.
+    '''
+    # Note to future developers: This function only modifies arc winding because that's currently the only kind of
+    # entity that is affected by changing angle direction. As more entities with angle dependencies are added, this
+    # function should probably be modified and renamed to correct those entites as well.
+
+    for entity in dfile.sections['ENTITIES']:
+        if entity.name == 'ARC':
+            entity.start_angle = (360 - entity.start_angle) % 360
+            entity.end_angle = (360 - entity.end_angle) % 360
+
+
+def rotate_arcs(dfile, degrees):
+    ''' Rotate the start and end point of all arcs in the file's ANGDIR direction by _degrees_. Useful if a file's
+        ANGBASE is set to some non-zero value, and you need it to be zero for easy processing.
+        The provided dfile will be modified in place.
+    '''
+    # Note to future developers: This function only modifies arc angles because that's currently the only kind of
+    # entity that is affected by changing the angle base. As more entities with angle dependencies are added, this
+    # function should probably be modified and renamed to correct those entites as well.
+
+    if degrees == 0:
+        return
+
+    for entity in dfile.sections['ENTITIES']:
+        if entity.name == 'ARC':
+            entity.start_angle = (entity.start_angle + degrees) % 360
+            entity.end_angle = (entity.end_angle + degrees) % 360
+
+
 class keyfaultdict(collections.defaultdict):
     ''' Functions similarly to the standard library's defaultdict, but calls the default factory function with the
         missing key as the first argument.
@@ -133,6 +167,9 @@ class record_block_iterator(object):
             raise TypeError
 
     def next(self):
+        if self.exhausted:
+            raise StopIteration
+
         record_set = copy.copy(self.next_set)
         self.next_set = []
 
