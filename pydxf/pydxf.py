@@ -112,15 +112,15 @@ class DxfFile(object):
     def layers(self):
         all_layers = tools.keyfaultdict(table.DxfLayer.make_default_layer)
 
-        table_sec = self.sections.get('TABLES', None)
+        table_sec = self.sections.get('TABLES')
         if table_sec:
-            layer_tab = table_sec.tables.get('LAYER', None)
+            layer_tab = table_sec.tables.get('LAYER')
             if layer_tab:
                 for layer in layer_tab.layers:
                     all_layers[layer.name] = layer
 
         # Explicitly create default layers from the ENTITIES section so that (x in layers) works as expected
-        entities_sec = self.sections.get('ENTITIES', None)
+        entities_sec = self.sections.get('ENTITIES')
         if entities_sec:
             for entity in entities_sec.entities:
                 if entity.layer_name not in all_layers:

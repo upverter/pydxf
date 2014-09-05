@@ -121,7 +121,9 @@ class HeaderSection(DxfSection):
     def make_section(records):
         section = HeaderSection()
 
-        block_iter = tools.record_block_iterator(records, pydxf.DxfRecord(9, None), [pydxf.DxfRecord(9, None), pydxf.DxfRecord(0, 'ENDSEC')])
+        block_iter = tools.record_block_iterator(
+            records, pydxf.DxfRecord(9, None), [pydxf.DxfRecord(9, None), pydxf.DxfRecord(0, 'ENDSEC')])
+
         for variable_records in block_iter:
             section._add_variable(*HeaderSection._make_variable(variable_records))
 
@@ -136,7 +138,8 @@ class HeaderSection(DxfSection):
     def _make_variable(records):
         # Not doing data validation. Caller should make sure data is valid.
         var_name = records[0].value.lstrip('$')
-        return var_name, records[1].value if len(records) == 2 else copy.deepcopy(records[1:])
+        var_val = records[1].value if len(records) == 2 else copy.deepcopy(records[1:])
+        return var_name, var_val
 
 
 class TablesSection(DxfSection):
@@ -176,7 +179,9 @@ class TablesSection(DxfSection):
     def make_section(records):
         section = TablesSection()
 
-        block_iter = tools.record_block_iterator(records, pydxf.DxfRecord(0, 'TABLE'), pydxf.DxfRecord(0, 'ENDTAB'), True)
+        block_iter = tools.record_block_iterator(
+            records, pydxf.DxfRecord(0, 'TABLE'), pydxf.DxfRecord(0, 'ENDTAB'), True)
+
         for table_records in block_iter:
             section.add_table(table.DxfTable.make_table(table_records))
 

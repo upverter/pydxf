@@ -49,8 +49,6 @@ def convert_units(measurement, source_units, target_units):
         from that map.
     '''
 
-    source = source_units if type(source_units) == str else INSUNITS[source_units]
-    target = target_units if type(target_units) == str else INSUNITS[source_units]
     return convert_from_meters(convert_to_meters(measurement, source), target)
 
 
@@ -59,7 +57,7 @@ def convert_to_meters(measurement, source_units):
         source_units can be any string as found in the INSUNITS map, or a key used to look up a value from that map.
     '''
 
-    source = source_units if type(source_units) == str else INSUNITS[source_units]
+    source = source_units if isinstance(source_units, basestring) else INSUNITS[source_units]
 
     if source not in VALUE_IN_METERS:
         raise ValueError('Unknown source units {}'.format(source))
@@ -72,7 +70,7 @@ def convert_from_meters(measurement, target_units):
         target_units can be any string as found in the INSUNITS map, or a key used to look up a value from that map.
     '''
 
-    target = target_units if type(target_units) == str else INSUNITS[target_units]
+    target = target_units if isinstance(target_units, basestring) else INSUNITS[target_units]
 
     if target not in VALUE_IN_METERS:
         raise ValueError('Unknown target units {}'.format(target))
