@@ -1,8 +1,5 @@
 import collections
-import entity
-import section
-import table
-import tools
+from . import entity, section, table, tools
 
 
 
