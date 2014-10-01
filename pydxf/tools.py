@@ -49,7 +49,7 @@ def convert_units(measurement, source_units, target_units):
         from that map.
     '''
 
-    return convert_from_meters(convert_to_meters(measurement, source), target)
+    return convert_from_meters(convert_to_meters(measurement, source_units), target_units)
 
 
 def convert_to_meters(measurement, source_units):
