@@ -1,2 +1,5 @@
 *.pyc
 *.dxf
+build
+dist
+pydxf.egg-info
