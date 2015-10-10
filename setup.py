@@ -4,9 +4,9 @@ from setuptools import setup
 
 setup(
     name='pydxf',
-    version='0.0.1',
-    author='Alex Williams',
-    author_email='alex@upverter.com',
+    version='0.0.2',
+    author='Upverter',
+    author_email='support@upverter.com',
     description='DXF parsing library for python',
     packages=['pydxf'],
     install_requires=[],
