@@ -154,3 +154,78 @@ class LineEntity(DxfEntity):
                 entity.add_records(rec)
 
         return entity
+
+
+class PolyLineEntity(DxfEntity):
+
+    ENTITY_TYPE = 'POLYLINE'
+
+    def __init__(self):
+        super(PolyLineEntity, self).__init__()
+        self.name = PolyLineEntity.ENTITY_TYPE
+        self.layer_name = ''
+
+    @staticmethod
+    def make_entity(records):
+        entity = PolyLineEntity()
+
+        for rec in records:
+            if rec.code == 8:
+                entity.layer_name = rec.value
+            else:
+                entity.add_records(rec)
+
+        return entity
+
+
+class VertexEntity(DxfEntity):
+
+    ENTITY_TYPE = 'VERTEX'
+
+    def __init__(self):
+        super(VertexEntity, self).__init__()
+        self.name = VertexEntity.ENTITY_TYPE
+        self.layer_name = ''
+        self.x = 0
+        self.y = 0
+        self.z = 0
+        self.bulge = 0
+
+    @staticmethod
+    def make_entity(records):
+        entity = VertexEntity()
+
+        for rec in records:
+            if rec.code == 8:
+                entity.layer_name = rec.value
+            elif rec.code == 10:
+                entity.x = float(rec.value)
+            elif rec.code == 20:
+                entity.y = float(rec.value)
+            elif rec.code == 30:
+                entity.z = float(rec.value)
+            elif rec.code == 42:
+                entity.bulge = float(rec.value)
+            else:
+                entity.add_records(rec)
+
+        return entity
+
+
+class SeqEndEntity(DxfEntity):
+
+    ENTITY_TYPE = 'SEQEND'
+
+    def __init__(self):
+        super(SeqEndEntity, self).__init__()
+        self.name = SeqEndEntity.ENTITY_TYPE
+        self.layer_name = ''
+
+    @staticmethod
+    def make_entity(records):
+        entity = SeqEndEntity()
+
+        for rec in records:
+            entity.add_records(rec)
+
+        return entity
