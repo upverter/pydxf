@@ -2,6 +2,7 @@ import collections
 import copy
 import decimal
 import pydxf
+import math
 
 
 
@@ -110,6 +111,33 @@ def rotate_arcs(dfile, degrees):
         if entity.name == 'ARC':
             entity.start_angle = (entity.start_angle + degrees) % 360
             entity.end_angle = (entity.end_angle + degrees) % 360
+
+
+def bulge_to_arc(v1, v2, bulge):
+    ''' Calculate the arc parameters given two VERTEX entities and the DXF "bulge" value.
+    Based on "Version 2" of "Bulge to Arc" found here: http://www.lee-mac.com/bulgeconversion.html '''
+    def distance(p1, p2):
+        return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
+
+    def angle(p1, p2):
+        return math.atan2(p2[1] - p1[1], p2[0] - p1[0])
+
+    def polar_add(point, angle, distance):
+        return (point[0] + distance * math.cos(angle),
+                point[1] + distance * math.sin(angle))
+
+    p1 = (v1.x, v1.y)
+    p2 = (v2.x, v2.y)
+    radius = distance(p1, p2) * (1 + bulge ** 2) / (4 * bulge)
+    center = polar_add(p1,
+                       angle(p1, p2) + (math.pi/2 - 2 * math.atan(bulge)),
+                       radius)
+    start_angle = angle(center, p1)
+    end_angle = angle(center, p2)
+    if bulge < 0:
+        start_angle, end_angle = end_angle, start_angle
+
+    return center, radius, start_angle, end_angle
 
 
 class keyfaultdict(collections.defaultdict):
