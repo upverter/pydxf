@@ -1,6 +1,5 @@
 import collections
-import pydxf
-from . import tools
+from . import tools, pydxf
 
 
 

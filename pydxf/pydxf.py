@@ -1,5 +1,4 @@
-import collections
-from . import entity, section, table, tools
+from . import section, table, tools
 
 
 
