@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='pydxf',
-    version='0.0.2',
+    version='0.0.3',
     author='Upverter',
     author_email='support@upverter.com',
     description='DXF parsing library for python',

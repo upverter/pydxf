@@ -40,7 +40,7 @@ class DxfEntity(object):
         '''
 
         if len(records) <= 0:
-            raise FormatException('Entities must have at least one record.')
+            raise pydxf.FormatException('Entities must have at least one record.')
 
         if not DxfEntity.entity_factories:
             DxfEntity.populate_factory_table()
@@ -67,6 +67,7 @@ class ArcEntity(DxfEntity):
         self.start_angle = 0
         self.end_angle = 0
         self.layer_name = ''
+        self.z_dir = 1
 
     @staticmethod
     def make_entity(records):
@@ -85,6 +86,8 @@ class ArcEntity(DxfEntity):
                 entity.start_angle = float(rec.value)
             elif rec.code == 51:
                 entity.end_angle = float(rec.value)
+            elif rec.code == 230:
+                entity.z_dir = float(rec.value)
             else:
                 entity.add_records(rec)
 
@@ -102,6 +105,7 @@ class CircleEntity(DxfEntity):
         self.y = 0
         self.radius = 0
         self.layer_name = ''
+        self.z_dir = 1
 
     @staticmethod
     def make_entity(records):
@@ -116,6 +120,8 @@ class CircleEntity(DxfEntity):
                 entity.y = float(rec.value)
             elif rec.code == 40:
                 entity.radius = float(rec.value)
+            elif rec.code == 230:
+                entity.z_dir = float(rec.value)
             else:
                 entity.add_records(rec)
 
@@ -134,6 +140,7 @@ class LineEntity(DxfEntity):
         self.x2 = 0
         self.y1 = 0
         self.y2 = 0
+        self.z_dir = 1
 
     @staticmethod
     def make_entity(records):
@@ -150,6 +157,8 @@ class LineEntity(DxfEntity):
                 entity.y1 = float(rec.value)
             elif rec.code == 21:
                 entity.y2 = float(rec.value)
+            elif rec.code == 230:
+                entity.z_dir = float(rec.value)
             else:
                 entity.add_records(rec)
 

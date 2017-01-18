@@ -35,11 +35,11 @@ class DxfSection(object):
         '''
 
         if len(records) < 3:
-            raise FormatException('Sections must consist of at least a start record, name record, and end record')
+            raise pydxf.FormatException('Sections must consist of at least a start record, name record, and end record')
         if records[1].code != 2:
-            raise FormatException('Section records must be immediately followed by a section name record.')
+            raise pydxf.FormatException('Section records must be immediately followed by a section name record.')
         if not records[-1].is_section_end():
-            raise FormatException('Section records must end with an end record.')
+            raise pydxf.FormatException('Section records must end with an end record.')
 
         if not DxfSection.section_factories:
             DxfSection.populate_factory_table()
