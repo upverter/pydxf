@@ -1,5 +1,7 @@
+from __future__ import absolute_import
+from builtins import object
 import collections
-import pydxf
+from . import errors
 from . import tools
 
 
@@ -40,7 +42,7 @@ class DxfEntity(object):
         '''
 
         if len(records) <= 0:
-            raise pydxf.FormatException('Entities must have at least one record.')
+            raise errors.FormatException('Entities must have at least one record.')
 
         if not DxfEntity.entity_factories:
             DxfEntity.populate_factory_table()

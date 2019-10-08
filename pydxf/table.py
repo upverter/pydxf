@@ -1,5 +1,7 @@
+from __future__ import absolute_import
+from builtins import object
 import collections
-import pydxf
+from . import record
 from . import tools
 
 
@@ -71,7 +73,7 @@ class LayerTable(DxfTable):
     def make_table(records):
         table = LayerTable()
 
-        block_iter = tools.record_block_iterator(records, pydxf.DxfRecord(0, 'LAYER'), pydxf.DxfRecord(0, None))
+        block_iter = tools.record_block_iterator(records, record.DxfRecord(0, 'LAYER'), record.DxfRecord(0, None))
         for layer_records in block_iter:
             table.add_layers(DxfLayer.make_layer(layer_records))
 
