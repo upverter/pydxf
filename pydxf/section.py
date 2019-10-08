@@ -1,6 +1,8 @@
+from __future__ import absolute_import
+from builtins import object
 import collections
 import copy
-import pydxf
+from . import pydxf
 from . import entity, table, tools
 
 
@@ -109,10 +111,10 @@ class HeaderSection(DxfSection):
         return self.__iter__()
 
     def itervalues(self):
-        return self.variables.itervalues()
+        return iter(self.variables.values())
 
     def iteritems(self):
-        return self.variables.iteritems()
+        return iter(self.variables.items())
 
     def __contains__(self, key):
         return key in self.variables
@@ -164,10 +166,10 @@ class TablesSection(DxfSection):
         return self.__iter__()
 
     def itervalues(self):
-        return self.tables.itervalues()
+        return iter(self.tables.values())
 
     def iteritems(self):
-        return self.tables.iteritems()
+        return iter(self.tables.items())
 
     def __contains__(self, key):
         return key in self.tables

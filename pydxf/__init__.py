@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 import io
-import pydxf
-import tools
+from . import pydxf
+from . import tools
 
 
 def open_path(file_path):

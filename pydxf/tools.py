@@ -1,7 +1,13 @@
+from __future__ import division
+from __future__ import absolute_import
+from builtins import range
+from past.builtins import basestring
+from builtins import object
+from past.utils import old_div
 import collections
 import copy
 import decimal
-import pydxf
+from . import pydxf
 import math
 
 
@@ -35,7 +41,7 @@ def is_ascii_dxf(stream):
     '''
 
     # Just try to read 5 records from the stream. If that succeeds, it's probably an ASCII DXF file.
-    for i in xrange(5):
+    for i in range(5):
         try:
             rec = pydxf.DxfRecord.parse_from_stream(stream)
         except pydxf.FormatException:
@@ -76,7 +82,7 @@ def convert_from_meters(measurement, target_units):
     if target not in VALUE_IN_METERS:
         raise ValueError('Unknown target units {}'.format(target))
 
-    return decimal.Decimal(measurement) / VALUE_IN_METERS[target]
+    return old_div(decimal.Decimal(measurement), VALUE_IN_METERS[target])
 
 
 def swap_arc_winding(dfile):
@@ -128,9 +134,9 @@ def bulge_to_arc(v1, v2, bulge):
 
     p1 = (v1.x, v1.y)
     p2 = (v2.x, v2.y)
-    radius = distance(p1, p2) * (1 + bulge ** 2) / (4 * bulge)
+    radius = old_div(distance(p1, p2) * (1 + bulge ** 2), (4 * bulge))
     center = polar_add(p1,
-                       angle(p1, p2) + (math.pi/2 - 2 * math.atan(bulge)),
+                       angle(p1, p2) + (old_div(math.pi,2) - 2 * math.atan(bulge)),
                        radius)
     start_angle = angle(center, p1)
     end_angle = angle(center, p2)
@@ -175,7 +181,7 @@ class record_block_iterator(object):
         return self
 
     def __next__(self):
-        return self.next()
+        return next(self)
 
     def get_top_level_records(self):
         if self.exhausted:
@@ -192,7 +198,7 @@ class record_block_iterator(object):
         else:
             raise TypeError
 
-    def next(self):
+    def __next__(self):
         if self.exhausted:
             raise StopIteration
 

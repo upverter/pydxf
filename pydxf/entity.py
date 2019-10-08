@@ -1,5 +1,7 @@
+from __future__ import absolute_import
+from builtins import object
 import collections
-import pydxf
+from . import pydxf
 from . import tools
 
 
