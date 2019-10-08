@@ -7,7 +7,7 @@ from past.utils import old_div
 import collections
 import copy
 import decimal
-from . import pydxf
+from . import record, errors
 import math
 
 
@@ -18,7 +18,7 @@ def ascii_record_iterator(stream):
     '''
 
     while True:
-        rec = pydxf.DxfRecord.parse_from_stream(stream)
+        rec = record.DxfRecord.parse_from_stream(stream)
         if rec is None:
             break
         yield rec
@@ -43,8 +43,8 @@ def is_ascii_dxf(stream):
     # Just try to read 5 records from the stream. If that succeeds, it's probably an ASCII DXF file.
     for i in range(5):
         try:
-            rec = pydxf.DxfRecord.parse_from_stream(stream)
-        except pydxf.FormatException:
+            rec = record.DxfRecord.parse_from_stream(stream)
+        except errors.FormatException:
             return False
 
     return True
@@ -191,12 +191,12 @@ class record_block_iterator(object):
 
     @staticmethod
     def _make_end_rules(block_end):
-        if isinstance(block_end, pydxf.DxfRecord):
+        if isinstance(block_end, record.DxfRecord):
             return [block_end]
         elif isinstance(block_end, collections.Iterable):
             return list(block_end)
         else:
-            raise TypeError
+            raise TypeError(block_end)
 
     def __next__(self):
         if self.exhausted:

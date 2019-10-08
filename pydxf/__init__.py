@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import io
-from . import pydxf
+from . import file
 from . import tools
 
 
@@ -10,4 +10,4 @@ def open_path(file_path):
             raise pydxf.FormatException('File does not appear to be ASCII DXF')
 
         fi.seek(0, io.SEEK_SET)
-        return pydxf.DxfFile.make_file(tools.ascii_record_iterator(fi))
+        return file.DxfFile.make_file(tools.ascii_record_iterator(fi))

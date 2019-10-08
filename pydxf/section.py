@@ -2,7 +2,8 @@ from __future__ import absolute_import
 from builtins import object
 import collections
 import copy
-from . import pydxf
+from . import record
+from . import errors
 from . import entity, table, tools
 
 
@@ -33,15 +34,15 @@ class DxfSection(object):
 
     @staticmethod
     def make_section(records):
-        ''' Construct a DxfSection from a list of pydxf.DxfRecords.
+        ''' Construct a DxfSection from a list of record.DxfRecords.
         '''
 
         if len(records) < 3:
-            raise pydxf.FormatException('Sections must consist of at least a start record, name record, and end record')
+            raise errors.FormatException('Sections must consist of at least a start record, name record, and end record')
         if records[1].code != 2:
-            raise pydxf.FormatException('Section records must be immediately followed by a section name record.')
+            raise errors.FormatException('Section records must be immediately followed by a section name record.')
         if not records[-1].is_section_end():
-            raise pydxf.FormatException('Section records must end with an end record.')
+            raise errors.FormatException('Section records must end with an end record.')
 
         if not DxfSection.section_factories:
             DxfSection.populate_factory_table()
@@ -80,7 +81,7 @@ class EntitiesSection(DxfSection):
     def make_section(records):
         section = EntitiesSection()
 
-        block_iter = tools.record_block_iterator(records[2:], pydxf.DxfRecord(0, None), pydxf.DxfRecord(0, None))
+        block_iter = tools.record_block_iterator(records[2:], record.DxfRecord(0, None), record.DxfRecord(0, None))
         for entity_records in block_iter:
             section.add_entities(entity.DxfEntity.make_entity(entity_records))
 
@@ -124,7 +125,7 @@ class HeaderSection(DxfSection):
         section = HeaderSection()
 
         block_iter = tools.record_block_iterator(
-            records, pydxf.DxfRecord(9, None), [pydxf.DxfRecord(9, None), pydxf.DxfRecord(0, 'ENDSEC')])
+            records, record.DxfRecord(9, None), [record.DxfRecord(9, None), record.DxfRecord(0, 'ENDSEC')])
 
         for variable_records in block_iter:
             section._add_variable(*HeaderSection._make_variable(variable_records))
@@ -182,7 +183,7 @@ class TablesSection(DxfSection):
         section = TablesSection()
 
         block_iter = tools.record_block_iterator(
-            records, pydxf.DxfRecord(0, 'TABLE'), pydxf.DxfRecord(0, 'ENDTAB'), True)
+            records, record.DxfRecord(0, 'TABLE'), record.DxfRecord(0, 'ENDTAB'), True)
 
         for table_records in block_iter:
             section.add_table(table.DxfTable.make_table(table_records))
